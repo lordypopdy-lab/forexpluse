@@ -326,16 +326,17 @@ const Admin = () => {
                                 <div className="col-xl-6 col-sm-6 grid-margin mt-3">
                                     <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
                                         <div className="card-body">
-                                            <div className="row">
+                                            <div className="row" style={{paddingBottom: "80px"}}>
                                                 <div style={{ marginBottom: "-50px" }} className="col-6 p-3">
                                                     <h6 className="text-muted font-weight-normal">value Added</h6>
                                                     <div className="d-flex align-items-center align-self-start">
                                                         <h5 style={{ fontSize: "24px" }} className="display-4 ls-3 text-center">{isBalanceVisible ? <><span className="text-600">$</span>{balance.toFixed(2)}</> : "******"}</h5>
                                                         <p className="text-warning ml-2 mb-0 font-weight-medium">+18%</p>
                                                     </div>
+                                                    <button onClick={handleShow} style={{ height: "40px", fontSize: "12px", position: "absolute", top: "45%" }} className="btn p-2 btn-gray mt-4">Balance Adder<span className="fas m-1 fa-plus"></span></button>
                                                 </div>
                                                 <div style={{ marginBottom: "-50px" }} className="col-6 p-3">
-                                                    <h6 className="text-muted font-weight-normal">value Added</h6>
+                                                    <h6 className="text-muted font-weight-normal">value message</h6>
                                                     <div className="d-flex align-items-center align-self-start">
                                                         <h5 style={{ fontSize: "24px" }} className="display-4 ls-3 text-center">{isBalanceVisible ? <><span className="text-600">$</span>{balance.toFixed(2)}</> : "******"}</h5>
                                                         <p className="text-warning ml-2 mb-0 font-weight-medium">+18%</p>
