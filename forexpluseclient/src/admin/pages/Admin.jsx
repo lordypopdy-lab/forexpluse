@@ -17,21 +17,32 @@ import toast from "react-hot-toast"
 const Admin = () => {
 
     if (!localStorage.getItem("admin")) {
-        location.href = "/admin/login";
+        window.location.href = "/admin/login";
     }
-
-    var [tInvestors, setTInvestors] = useState(0);
-    const [balance, setBalance] = useState(0);
+    const [isDelete, setDelete] = useState();
+    const [isApprove, setApprove] = useState("");
+    const [isDecline, setDecline] = useState("");
+    const [balance, setBalance] = useState(6056);
     const [users, setUsers] = useState([]);
     const [show, setShow] = useState(false);
+    const [bankR, setBankR] = useState([]);
     const [show1, setShow1] = useState(false);
     const [show2, setShow2] = useState(false);
-    const [message, setMessage] = useState("");
-    const [adder, setAdder] = useState({ id: "", value: "", type: "" });
+    const [show3, setShow3] = useState(false);
+    const [show4, setShow4] = useState(false);
+    const [show5, setShow5] = useState(false);
+    const [show6, setShow6] = useState(false);
+    const [cryptoR, setCryptoR] = useState([]);
     const [isLoading, setLoading] = useState(false);
     const [isLoading1, setLoading1] = useState(false);
-    const [bankR, setBankR] = useState([]);
-    const [cryptoR, setCryptoR] = useState([]);
+    const [isLoading2, setLoading2] = useState(false);
+    const [isLoading3, setLoading3] = useState(false);
+    const [isLoading4, setLoading4] = useState(false);
+    const [isLoading5, setLoading5] = useState(false);
+    const [isLoading6, setLoading6] = useState(false);
+    const [message, setMessage] = useState({ id: "", value: "" });
+    const [notification, setNotification] = useState({ id: "", value: "" })
+    const [adder, setAdder] = useState({ id: "", value: "", type: "" });
     const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
     useEffect(() => {
@@ -107,7 +118,12 @@ const Admin = () => {
         }
     }
 
-    const handleClick = () => setLoading(true);
+    const handleClick = (data) => {
+        setLoading(true);
+        console.log(data)
+        localStorage.setItem("chatID", data);
+        window.location.href = "/admin/contact";
+    }
 
     const toggleBalanceVisibility = () => {
         setIsBalanceVisible((prev) => !prev);
@@ -126,6 +142,25 @@ const Admin = () => {
     const handleClose2 = () => setShow2(false);
     const handleShow2 = () => setShow2(true);
 
+    const handleClose3 = () => setShow3(false);
+    const handleShow3 = () => setShow3(true);
+
+    const handleClose4 = () => setShow4(false);
+    const handleShow4 = (data) => {
+        setShow4(true)
+        setDecline(data);
+    }
+    const handleClose5 = () => setShow5(false);
+    const handleShow5 = (data) => {
+        setShow5(true)
+        setApprove(data);
+    }
+    const handleClose6 = () => setShow6(false);
+    const handleShow6 = (data) => {
+        setShow6(true)
+        setDelete(data);
+    }
+
     const handleCopy = async (textToCopy) => {
         try {
             await navigator.clipboard.writeText(textToCopy);
@@ -135,6 +170,86 @@ const Admin = () => {
         }
     };
 
+    const handleMessage = async () => {
+        setLoading2(true)
+        const { id, value } = message;
+        console.log(id)
+        await axios.post("/userMessage", { id, value }).then((data) => {
+            if (data.data.success) {
+                toast.success(data.data.success);
+                setMessage({
+                    id: "",
+                    value: "",
+                })
+                setLoading2(false)
+            } else if (data.data.error) {
+                setLoading2(false)
+                toast.error(data.data.error);
+            }
+        })
+        // handleClose3()
+    }
+
+    const handleNotification = async () => {
+        setLoading3(true)
+        const { id, value } = notification;
+        console.log(id)
+        await axios.post("/userNotification", { id, value }).then((data) => {
+            if (data.data.success) {
+                toast.success(data.data.success);
+                setNotification({
+                    id: "",
+                    value: "",
+                })
+                setLoading3(false)
+            } else if (data.data.error) {
+                setLoading3(false)
+                toast.error(data.data.error);
+            }
+        })
+    }
+
+    const handleDecline = async () => {
+        handleShow4();
+        setLoading4(true);
+        await axios.post("/Decline", { isDecline }).then((data) => {
+            if (data.data.success) {
+                setLoading4(false);
+                toast.success(data.data.success);
+            } else if (data.data.error) {
+                setLoading4(false);
+                toast.error(data.data.error);
+            }
+        })
+    }
+
+    const handleApprove = async () => {
+        handleShow5();
+        setLoading5(true);
+        await axios.post("/Approve", { isApprove }).then((data) => {
+            if (data.data.success) {
+                setLoading5(false);
+                toast.success(data.data.success);
+            } else if (data.data.error) {
+                setLoading5(false);
+                toast.error(data.data.error);
+            }
+        })
+    }
+
+    const handleDelete = async () => {
+        handleShow6();
+        setLoading6(true);
+        await axios.post("/Delete", { isDelete }).then((data) => {
+            if (data.data.success) {
+                setLoading6(false);
+                toast.success(data.data.success);
+            } else if (data.data.error) {
+                setLoading6(false);
+                toast.error(data.data.error);
+            }
+        })
+    }
     return (
         <div>
             <NavBar />
@@ -201,11 +316,12 @@ const Admin = () => {
                                 <tr>
                                     <th>[#]</th>
                                     <th>[<i className='fas text-success fa-paper-plane'></i>]</th>
-                                    <th>[Country]</th>
-                                    <th>[Account]</th>
+                                    <th>[Name]</th>
                                     <th>[Profit]</th>
                                     <th>[Bonus]</th>
                                     <th>[Deposit]</th>
+                                    <th>[Country]</th>
+                                    <th>[Account]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -218,16 +334,17 @@ const Admin = () => {
                                                     variant="primary"
                                                     style={{ height: "auto", padding: "4px", fontSize: "14px", width: "70px" }}
                                                     disabled={isLoading}
-                                                    onClick={!isLoading ? handleClick : null}
+                                                    onClick={!isLoading ? () => handleClick(user.email) : null}
                                                 >
                                                     {isLoading ? "Loading…" : "Send"}
                                                 </Button>
                                             </td>
-                                            <td>{user.country}</td>
-                                            <td>{user.account}</td>
+                                            <th>{user.name}</th>
                                             <td>{user.currency}{user.profit.toFixed(2)}</td>
                                             <td>{user.currency}{user.bonuse.toFixed(2)}</td>
                                             <td>{user.currency}{user.deposit.toFixed(2)}</td>
+                                            <td>{user.country}</td>
+                                            <td>{user.account}</td>
                                         </tr>
                                     ))
                                 ) : (
@@ -287,7 +404,154 @@ const Admin = () => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
+                <Modal className='mt-4' show={show3} onHide={handleClose3}>
+                    <Modal.Header className='bg-dark' closeButton>
+                        <Modal.Title>Add Notification</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className='bg-dark modal-body-scroll'>
+                        <Form>
+                            <div className="card-title text-warning">
+                                Set Submit Message
+                            </div>
+                            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                <Form.Label>Enter UserID</Form.Label>
+                                <Form.Control
+                                    value={message.id}
+                                    onChange={(e) => setMessage({ ...message, id: e.target.value })}
+                                    className='bg-dark'
+                                    type="test"
+                                    placeholder=""
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
+                                <Form.Label>Example textarea</Form.Label>
+                                <Form.Control
+                                    value={message.value}
+                                    onChange={(e) => setMessage({ ...message, value: e.target.value })}
+                                    className='bg-dark text-light'
+                                    as="textarea"
+                                    rows={3}
+                                />
+                            </Form.Group>
+                            <Button
+                                variant="primary"
+                                style={{ height: "auto", padding: "8px", width: "160px" }}
+                                disabled={isLoading2}
+                                onClick={!isLoading2 ? handleMessage : null}
+                            >
+                                {isLoading2 ? "Sending..." : "Save Changes"}
+                            </Button>
+                        </Form>
+                        <Form className='mt-5'>
+                            <div className="card-title text-warning">
+                                Set Notification Message
+                            </div>
+                            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                                <Form.Label>Enter UserID</Form.Label>
+                                <Form.Control
+                                    value={notification.id}
+                                    onChange={(e) => setNotification({ ...notification, id: e.target.value })}
+                                    className='bg-dark'
+                                    type="test"
+                                    placeholder=""
+                                />
+                            </Form.Group>
+                            <Form.Group className="mb-3" controlId="exampleForm.ControlTextarea1">
+                                <Form.Label>Example textarea</Form.Label>
+                                <Form.Control
+                                    value={notification.value}
+                                    onChange={(e) => setNotification({ ...notification, value: e.target.value })}
+                                    className='bg-dark text-light'
+                                    as="textarea"
+                                    rows={3}
+                                />
+                            </Form.Group>
+                            <Button
+                                variant="primary"
+                                style={{ height: "auto", padding: "8px", width: "160px" }}
+                                disabled={isLoading3}
+                                onClick={!isLoading3 ? handleNotification : null}
+                            >
+                                {isLoading3 ? "Sending..." : "Save Changes"}
+                            </Button>
+                        </Form>
+                    </Modal.Body>
 
+                    <Modal.Footer className='bg-dark'>
+                        <Button style={{ padding: "8px", width: "120px" }} variant="secondary" onClick={handleClose3}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+                <Modal className='mt-4' show={show4} onHide={handleClose4}>
+                    <Modal.Header className='bg-dark' closeButton>
+                        <Modal.Title>Warning!</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className='bg-dark modal-body-scroll'>
+                        <div className="card-title text-warning">
+                            Are you Sure yoo want to Decline This Transaction?
+                        </div>
+                        <Button
+                            variant="primary"
+                            style={{ height: "auto", padding: "8px", width: "160px" }}
+                            disabled={isLoading4}
+                            onClick={!isLoading4 ? handleDecline : null}
+                        >
+                            {isLoading4 ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </Modal.Body>
+                    <Modal.Footer className='bg-dark'>
+                        <Button style={{ padding: "8px", width: "120px" }} variant="secondary" onClick={handleClose4}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+                <Modal className='mt-4' show={show5} onHide={handleClose5}>
+                    <Modal.Header className='bg-dark' closeButton>
+                        <Modal.Title>Warning!</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className='bg-dark modal-body-scroll'>
+                        <div className="card-title text-warning">
+                            Are you Sure yoo want to Approve This Transaction?
+                        </div>
+                        <Button
+                            variant="primary"
+                            style={{ height: "auto", padding: "8px", width: "160px" }}
+                            disabled={isLoading5}
+                            onClick={!isLoading5 ? handleApprove : null}
+                        >
+                            {isLoading5 ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </Modal.Body>
+                    <Modal.Footer className='bg-dark'>
+                        <Button style={{ padding: "8px", width: "120px" }} variant="secondary" onClick={handleClose5}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+                <Modal className='mt-4' show={show6} onHide={handleClose6}>
+                    <Modal.Header className='bg-dark' closeButton>
+                        <Modal.Title>Warning!</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className='bg-dark modal-body-scroll'>
+                        <div className="card-title text-warning">
+                            Are you Sure yoo want to Delete This Transaction?
+                        </div>
+                        <Button
+                            variant="primary"
+                            style={{ height: "auto", padding: "8px", width: "160px" }}
+                            disabled={isLoading6}
+                            onClick={!isLoading6 ? handleDelete : null}
+                        >
+                            {isLoading6 ? "Deleting..." : "Delete"}
+                        </Button>
+                    </Modal.Body>
+                    <Modal.Footer className='bg-dark'>
+                        <Button style={{ padding: "8px", width: "120px" }} variant="secondary" onClick={handleClose6}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
                 <div className="container-fluid page-body-wrapper">
                     <div className="main-panel m-0 w-100">
                         <div className="content-wrapper">
@@ -326,22 +590,22 @@ const Admin = () => {
                                 <div className="col-xl-6 col-sm-6 grid-margin mt-3">
                                     <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
                                         <div className="card-body">
-                                            <div className="row" style={{paddingBottom: "80px"}}>
+                                            <div className="row" style={{ paddingBottom: "80px" }}>
                                                 <div style={{ marginBottom: "-50px" }} className="col-6 p-3">
                                                     <h6 className="text-muted font-weight-normal">value Added</h6>
                                                     <div className="d-flex align-items-center align-self-start">
-                                                        <h5 style={{ fontSize: "24px" }} className="display-4 ls-3 text-center">{isBalanceVisible ? <><span className="text-600">$</span>{balance.toFixed(2)}</> : "******"}</h5>
+                                                        <h5 style={{ fontSize: "24px" }} className="display-4 ls-3 text-center">{isBalanceVisible ? <><span className="text-600">$</span>{balance.toFixed(2) - 3925}</> : "******"}</h5>
                                                         <p className="text-warning ml-2 mb-0 font-weight-medium">+18%</p>
                                                     </div>
                                                     <button onClick={handleShow} style={{ height: "40px", fontSize: "12px", position: "absolute", top: "45%" }} className="btn p-2 btn-gray mt-4">Balance Adder<span className="fas m-1 fa-plus"></span></button>
                                                 </div>
                                                 <div style={{ marginBottom: "-50px" }} className="col-6 p-3">
-                                                    <h6 className="text-muted font-weight-normal">value message</h6>
+                                                    <h6 className="text-muted font-weight-normal">2 Actions</h6>
                                                     <div className="d-flex align-items-center align-self-start">
-                                                        <h5 style={{ fontSize: "24px" }} className="display-4 ls-3 text-center">{isBalanceVisible ? <><span className="text-600">$</span>{balance.toFixed(2)}</> : "******"}</h5>
+                                                        <h5 style={{ fontSize: "24px" }} className="display-4 ls-3 text-center">{isBalanceVisible ? <><span className="text-600">$</span>{balance.toFixed(2) - 1260}</> : "******"}</h5>
                                                         <p className="text-warning ml-2 mb-0 font-weight-medium">+18%</p>
                                                     </div>
-                                                    <button onClick={handleShow} style={{ height: "40px", fontSize: "12px", position: "absolute", top: "45%" }} className="btn p-2 btn-gray mt-4">Balance Adder<span className="fas m-1 fa-plus"></span></button>
+                                                    <button onClick={handleShow3} style={{ height: "40px", fontSize: "12px", position: "absolute", top: "45%" }} className="btn p-2 btn-gray mt-4">message sender<span className="fa fa-paper-plane m-1"></span></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -388,8 +652,8 @@ const Admin = () => {
                                                         <th>[Swift-code]</th>
                                                         <th>[Status]</th>
                                                         <th>[Email]</th>
-                                                        <th>[Approve]</th>
                                                         <th>[Decline]</th>
+                                                        <th>[Approve]</th>
                                                         <th>[Delete]</th>
                                                     </tr>
                                                 </thead>
@@ -404,15 +668,15 @@ const Admin = () => {
                                                                 <td>{data.swiftCode}</td>
                                                                 <td>{data.status}</td>
                                                                 <td>{data.email}</td>
-                                                                <td><Button style={{ fontSize: "14px" }} variant="warning p-2 m-1">Decline</Button></td>
-                                                                <td> <Button style={{ fontSize: "14px" }} variant="success p-2 m-1">Approve</Button></td>
-                                                                <td><Button style={{ fontSize: "14px" }} variant="danger p-2 m-1">Delete</Button></td>
+                                                                <td><Button onClick={() => handleShow4(data._id)} style={{ fontSize: "14px" }} variant="warning p-2 m-1">Decline</Button></td>
+                                                                <td> <Button onClick={() => handleShow5(data._id)} style={{ fontSize: "14px" }} variant="success p-2 m-1">Approve</Button></td>
+                                                                <td><Button onClick={() => handleShow6(data._id)} style={{ fontSize: "14px" }} variant="danger p-2 m-1">Delete</Button></td>
                                                                 <td></td>
                                                             </tr>
                                                         ))
                                                     ) :
                                                         <tr>
-                                                            <td colSpan="10"  className='text-center'>No Records Available!</td>
+                                                            <td colSpan="10" className='text-center'>No Records Available!</td>
                                                         </tr>
                                                     }
                                                 </tbody>
@@ -432,8 +696,8 @@ const Admin = () => {
                                                         <th>[Wallet]</th>
                                                         <th>[Status]</th>
                                                         <th>[Email]</th>
-                                                        <th>[Approve]</th>
                                                         <th>[Decline]</th>
+                                                        <th>[Approve]</th>
                                                         <th>[Delete]</th>
                                                     </tr>
                                                 </thead>
@@ -446,15 +710,15 @@ const Admin = () => {
                                                                 <td>{data.cryptoAddress}</td>
                                                                 <td>{data.status}</td>
                                                                 <td>{data.email}</td>
-                                                                <td><Button style={{ fontSize: "14px" }} variant="warning p-2 m-1">Decline</Button></td>
-                                                                <td> <Button style={{ fontSize: "14px" }} variant="success p-2 m-1">Approve</Button></td>
-                                                                <td><Button style={{ fontSize: "14px" }} variant="danger p-2 m-1">Delete</Button></td>
+                                                                <td><Button onClick={() => handleShow4(data._id)} style={{ fontSize: "14px" }} variant="warning p-2 m-1">Decline</Button></td>
+                                                                <td> <Button onClick={() => handleShow5(data._id)} style={{ fontSize: "14px" }} variant="success p-2 m-1">Approve</Button></td>
+                                                                <td><Button onClick={() => handleShow6(data._id)} style={{ fontSize: "14px" }} variant="danger p-2 m-1">Delete</Button></td>
                                                                 <td></td>
                                                             </tr>
                                                         ))
                                                     ) :
                                                         <tr>
-                                                            <td colSpan="8"  className='text-center'>No Records Available!</td>
+                                                            <td colSpan="8" className='text-center'>No Records Available!</td>
                                                         </tr>
                                                     }
                                                 </tbody>

@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import Modal from 'react-bootstrap/Modal';
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import { useState, useEffect } from 'react'
@@ -10,9 +11,12 @@ import FadeLoader from 'react-spinners/FadeLoader';
 const Withdraw = () => {
 
     const [user, setUser] = useState([]);
+    const [show, setShow] = useState(false);
+    const [isLoading, setLoading] = useState(false);
     const [loading1, setLoading1] = useState(false);
     const [loading2, setLoading2] = useState(false);
     const [bankR, setBankR] = useState([]);
+    const [isNotification, setNotification] = useState('');
     const [cryptoR, setcryptoR] = useState([]);
     const [dataCrypto, setdataCrypto] = useState({ value: "", walletAddress: "" })
     const [data, setData] = useState({ value: 0, bank_name: "", account_name: "", account_number: "", swift_code: "" })
@@ -20,17 +24,26 @@ const Withdraw = () => {
     useEffect(() => {
         const localStore = JSON.parse(localStorage.getItem("user"));
         const email = localStore.email;
-        const getCryptoRecords = async ()=>{
-            await axios.post("/getCryptoRecords", {email}).then((data)=>{
-                if(data){
-                    setcryptoR(data.data);
-                    console.log(data.data);
+        const ID = localStore._id;
+
+        const getNotification = async () => {
+            await axios.post("/getMessage", { ID }).then((data) => {
+                if (data.data.submitMessage) {
+                    console.log(data.data.submitMessage)
+                    setNotification(data.data.submitMessage);
                 }
             })
         }
-        const getBankRecords = async ()=>{
-            await axios.post("/getBankRecords", {email}).then((data)=>{
-                if(data){
+        const getCryptoRecords = async () => {
+            await axios.post("/getCryptoRecords", { email }).then((data) => {
+                if (data) {
+                    setcryptoR(data.data);
+                }
+            })
+        }
+        const getBankRecords = async () => {
+            await axios.post("/getBankRecords", { email }).then((data) => {
+                if (data) {
                     setBankR(data.data);
                 }
             })
@@ -42,6 +55,7 @@ const Withdraw = () => {
         getUser();
         getBankRecords();
         getCryptoRecords();
+        getNotification();
     }, [])
 
     const handleCopy = async (textToCopy) => {
@@ -52,6 +66,7 @@ const Withdraw = () => {
             toast.error("Failed to copy!")
         }
     };
+
     const bankWithdraw = async () => {
         setLoading1(true);
         const email = user.email
@@ -85,6 +100,7 @@ const Withdraw = () => {
             console.log("Withrawal failed: ", error);
         }
     }
+
     const cyptoWithrawal = async (e) => {
         e.preventDefault();
         setLoading2(true);
@@ -104,7 +120,7 @@ const Withdraw = () => {
                         value: "",
                         walletAddress: ""
                     })
-                }else if(data.data.error){
+                } else if (data.data.error) {
                     toast.error(data.data.error);
                     setLoading2(false);
                 }
@@ -115,9 +131,44 @@ const Withdraw = () => {
 
     }
 
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+
+    const handleWithdraw = async () => {
+        bankWithdraw()
+
+    }
     return (
         <>
             <MainNavBar />
+            <Modal className='mt-4' show={show} onHide={handleClose}>
+                <Modal.Header className='bg-dark' closeButton>
+                    <Modal.Title>Warning!</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className='bg-dark modal-body-scroll'>
+                    {isNotification !== '' ?
+                        <div className="card-title text-warning mb-5">
+                            {isNotification}
+                        </div>
+                        :
+                        <div className="card-title text-warning mb-5">
+                            Are you Sure you want to Approve This Transaction?
+                        </div>}
+                    <Button
+                        variant="primary"
+                        style={{ height: "auto", padding: "8px", width: "160px" }}
+                        disabled={isLoading}
+                        onClick={!isLoading ? handleWithdraw : null}
+                    >
+                        {isLoading ? "Saving..." : "Save Changes"}
+                    </Button>
+                </Modal.Body>
+                <Modal.Footer className='bg-dark'>
+                    <Button style={{ padding: "8px", width: "120px" }} variant="secondary" onClick={handleClose}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
             <div style={{ marginTop: "80px" }} className="container-scroller">
                 <div className="container-fluid page-body-wrapper">
                     <div className="main-panel m-0 w-100">
@@ -180,7 +231,7 @@ const Withdraw = () => {
                                                     />
                                                 </div>
                                                 <div className="mt-3 d-flex justify-content-between">
-                                                    <button onClick={bankWithdraw} type="button" className="btn btn-primary mr-2">Withdraw<i className="fas fa-arrow-down text-warning m-1"></i></button>
+                                                    <button onClick={handleShow} type="button" className="btn btn-primary mr-2">Withdraw<i className="fas fa-arrow-down text-warning m-1"></i></button>
                                                     <button className="btn btn-dark">Cancel</button>
                                                 </div>
                                             </form>
@@ -250,23 +301,23 @@ const Withdraw = () => {
                                                 </thead>
                                                 <tbody>
                                                     {bankR.length >= 0 ? (
-                                                        bankR.map((data)=>(
+                                                        bankR.map((data) => (
                                                             <tr key={data._id}>
-                                                            <td>ID{data._id.slice(1, 10)}</td>
-                                                            <td>{user.currency}{data.amount}</td>
-                                                            <td>{data.bank}</td>
-                                                            <td>{data.name}</td>
-                                                            <td>{data.swiftCode}</td>
-                                                            <td>{data.status}</td>
-                                                            <td>{data.email}</td>
-                                                        </tr>
+                                                                <td>ID{data._id.slice(1, 10)}</td>
+                                                                <td>{user.currency}{data.amount}</td>
+                                                                <td>{data.bank}</td>
+                                                                <td>{data.name}</td>
+                                                                <td>{data.swiftCode}</td>
+                                                                <td>{data.status}</td>
+                                                                <td>{data.email}</td>
+                                                            </tr>
                                                         ))
-                                                    ): 
-                                                    <tr>                                          
-                                                    <td className='text-center'>No Records Found</td>
-                                                </tr>
+                                                    ) :
+                                                        <tr>
+                                                            <td className='text-center'>No Records Found</td>
+                                                        </tr>
                                                     }
-                                                   
+
                                                 </tbody>
                                             </Table>
                                         </div>
@@ -288,20 +339,20 @@ const Withdraw = () => {
                                                 </thead>
                                                 <tbody>
                                                     {cryptoR.length >= 0 ? (
-                                                        cryptoR.map((data)=>(
+                                                        cryptoR.map((data) => (
                                                             <tr key={data._id}>
-                                                            <td>ID:{data._id.slice(1, 10)}</td>
-                                                            <td>{user.currency}{data.amount}</td>
-                                                            <td onClick={()=>handleCopy(data.cryptoAddress)}>{data.cryptoAddress.slice(1, 10)}</td>
-                                                            <td>{data.status}</td>
-                                                            <td>{data.email}</td>
-                                                            <td></td>
-                                                        </tr>
+                                                                <td>ID:{data._id.slice(1, 10)}</td>
+                                                                <td>{user.currency}{data.amount}</td>
+                                                                <td onClick={() => handleCopy(data.cryptoAddress)}>{data.cryptoAddress.slice(1, 10)}</td>
+                                                                <td>{data.status}</td>
+                                                                <td>{data.email}</td>
+                                                                <td></td>
+                                                            </tr>
                                                         ))
-                                                    ): 
-                                                    <tr>
-                                                    <td className='text-center'>No Records Available</td>
-                                                </tr>}                                               
+                                                    ) :
+                                                        <tr>
+                                                            <td className='text-center'>No Records Available</td>
+                                                        </tr>}
                                                 </tbody>
                                             </Table>
                                         </div>

@@ -2,8 +2,236 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const Admin = require("../models/adminModel");
 const bankModel = require("../models/bankModel");
+const chatModel = require("../models/chatModel");
 const cryptoModel = require("../models/cryptoModel");
+const adminMessage = require("../models/adminMessage");
 const { hashPassword, comparePassword } = require("../helpers/auth");
+
+const getMessage = async (req, res) => {
+  const { ID } = req.body;
+  
+  const getNoti = await adminMessage.findOne({userID: ID});
+
+  if(getNoti){
+    return res.json(getNoti)
+  }
+
+  return res.json({data: "No data"});
+}
+
+const getNotification = async (req, res) => {
+  const {ID} = req.body;
+  const getNoti = await adminMessage.findOne({userID: ID});
+
+  if(getNoti){
+    return res.json(getNoti)
+  }
+
+  return res.json({data: "No data"});
+}
+
+const Delete = async (req, res) => {
+  const { isDelete } = req.body;
+
+  const checkBank = await bankModel.findOne({_id: isDelete});
+  const checkCrypto = await cryptoModel.findOne({_id: isDelete});
+
+  if(checkBank){
+    await bankModel.deleteOne({_id: isDelete})
+    return res.json({
+      success: "Transaction Deleted Successfully!"
+    })
+  }
+
+  if(checkCrypto){
+    await cryptoModel.deleteOne({_id: isDelete});
+    return res.json({
+      success: "Transaction Deleted Successfully!"
+    })
+  }
+
+  return res.json({
+    error: "Unidentify transaction ID"
+  })
+
+}
+
+const Approve = async (req, res) => {
+  const { isApprove } = req.body;
+
+  const checkBank = await bankModel.findOne({_id: isApprove});
+  const checkCrypto = await cryptoModel.findOne({_id: isApprove});
+
+  if(checkBank){
+    await bankModel.updateOne({_id: isApprove}, {$set: {status: "Approved"}});
+    return res.json({
+      success: "Transaction approved Successfully!"
+    })
+  }
+
+  if(checkCrypto){
+    await cryptoModel.updateOne({_id: isApprove}, {$set: {status: "Approved"}});
+    return res.json({
+      success: "Transaction Approved Successfully!"
+    })
+  }
+
+  return res.json({
+    error: "Unidentify transaction ID"
+  })
+
+}
+
+const Decline = async (req, res) => {
+  const { isDecline } = req.body;
+
+  const checkBank = await bankModel.findOne({_id: isDecline});
+  const checkCrypto = await cryptoModel.findOne({_id: isDecline});
+
+  if(checkBank){
+    await bankModel.updateOne({_id: isDecline}, {$set: {status: "Declined"}});
+    return res.json({
+      success: "Transaction Declined Successfully!"
+    })
+  }
+
+  if(checkCrypto){
+    await cryptoModel.updateOne({_id: isDecline}, {$set: {status: "Declined"}});
+    return res.json({
+      success: "Transaction Declined Successfully!"
+    })
+  }
+
+  return res.json({
+    error: "Unidentify transaction ID"
+  })
+
+}
+
+const userNotification = async (req, res) => {
+  const { id, value } = req.body;
+  if (!id) {
+    return res.json({
+      error: "userID and notification field is required! to send Message"
+    })
+  }
+
+  if (!value) {
+    return res.json({
+      error: "userID and notification field is required! to send Message"
+    })
+  }
+
+  check01 = await adminMessage.findOne({ userID: id });
+  if (check01) {
+    await adminMessage.updateOne({ userID: id }, { $set: { notification: value } });
+    return res.json({
+      success: "Notification sent"
+    })
+  }
+
+   await adminMessage.create({
+    userID: id,
+    notification: value,
+  })
+
+  return res.json({
+    success: "Notification sent"
+  })
+}
+
+const notificationAdder = async (req, res) => {
+  const { id, value } = req.body;
+
+  if (!id) {
+    return res.json({
+      error: "userID and message field is required! to send Message"
+    })
+  }
+
+  if (!value) {
+    return res.json({
+      error: "userID and message field is required! to send Message"
+    })
+  }
+
+  check01 = await adminMessage.findOne({ userID: id });
+  if (check01) {
+    await adminMessage.updateOne({ userID: id }, { $set: { submitMessage: value } });
+    return res.json({
+      success: "message sent"
+    })
+  }
+
+   await adminMessage.create({
+    userID: id,
+    submitMessage: value,
+  })
+
+  return res.json({
+    success: "message sent"
+  })
+}
+
+const deleteChat = async (req, res) => {
+  const { id } = req.body;
+  const deleted = await chatModel.deleteOne({ _id: id });
+  if (deleted) {
+    return res.json({
+      success: "Chat Deleted"
+    })
+  }
+}
+
+const chatSend = async (req, res) => {
+  const { value, from, email } = req.body;
+
+  if (!value) {
+    return res.json({
+      error: "Message field is required"
+    })
+  }
+
+  if (!from) {
+    return res.json({
+      error: "unidentified User"
+    })
+  }
+
+  if (!email) {
+    return res.json({
+      error: "Email Not Found"
+    })
+  }
+  const createNewChat = await chatModel.create({
+    from: from,
+    email: email,
+    message: value,
+    tmp_stp: new Date()
+  })
+
+  if (createNewChat) {
+    const chat = await chatModel.find({ email: email });
+    return res.json({
+      chat: chat
+    })
+  }
+}
+
+const getAdminChat = async (req, res) => {
+  const { email } = req.body;
+
+  const getChat = await chatModel.find({ email: email });
+  if (getChat) {
+    return res.json({
+      chat: getChat
+    });
+  }
+
+  res.json({
+    message: "No Chat Available"
+  })
+}
 
 const AdminGetCrypto = async (req, res) => {
   const { email } = req.body;
@@ -495,16 +723,26 @@ const createUser = async (req, res) => {
 
 module.exports = {
   test,
+  Delete,
+  Approve,
   getUser,
+  Decline,
   getUsers,
+  chatSend,
+  deleteChat,
   loginUser,
+  getMessage,
   createUser,
   loginAdmin,
   addBalance,
+  getAdminChat,
   withdrawBank,
   AdminGetBankR,
+  getNotification,
   AdminGetCrypto,
   withdrawCrypto,
   getBankRecords,
-  getCryptoRecords
+  getCryptoRecords,
+  userNotification,
+  notificationAdder,
 };

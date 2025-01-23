@@ -13,6 +13,7 @@ const Dashboard = () => {
     const [balance, setBalance ] = useState(0);
     const [user, setUser] = useState([]);
     const [message, setMessage] = useState("");
+    const [isNotification, setNotification] = useState('');
     const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
     const newU = localStorage.getItem("user");
@@ -20,9 +21,19 @@ const Dashboard = () => {
         window.location.href = "/login"
     }
     useEffect(() => {
+        const newUser = JSON.parse(newU);
+        const email = newUser.email;
+        const ID = newUser._id;
+
+        const getNotification = async ()=>{
+            await axios.post("/getNotification", {ID}).then((data)=>{
+                if(data.data.notification){
+                    setNotification(data.data.notification);
+                }
+            })
+        }
+
         const getUser = async ()=>{
-            const newUser = JSON.parse(newU);
-            const email = newUser.email;
             await axios.post("/getUser", {email}).then((data)=>{
                 if(data){
                     setUser(data.data);
@@ -32,13 +43,15 @@ const Dashboard = () => {
             })
         }
         getUser();
+        getNotification();
     }, [])
     const toggleBalanceVisibility = () => {
         setIsBalanceVisible((prev) => !prev);
     };
     const handleSend = async () => {
-        alert("Message Sent!");
+        window.location.href = "/contact"
     }
+
 
 
     return (
@@ -83,7 +96,7 @@ const Dashboard = () => {
                                             <div className="text-center btn-group ml-1">
                                                 <button className="btn-special deposite"><a href="/deposite" style={{ fontWeight: "600" }} className="text-white mt-4"><i style={{ borderBottomLeftRadius: "15px", borderTopRightRadius: "15px" }} className="fas fa-wallet d-block mb-1 bg-dark text-warning action-icons p-3"></i>Deposite</a></button>
                                                 <button className="btn-special withdraw"><a href="/withdraw" style={{ fontWeight: "600" }} className="text-white mt-4"><i style={{ borderBottomLeftRadius: "15px", borderTopRightRadius: "15px", marginLeft: "35px" }} className="fas fa-paper-plane fa-lg me-2 d-block text-warning bg-dark p-3"></i>Withdraw</a></button>
-                                                <button className="btn-special text-center withdraw"><a href="https://www.coinbase.com/" style={{ fontWeight: "600" }} className="text-white "><i style={{ borderBottomLeftRadius: "15px", borderTopRightRadius: "15px", marginLeft: "20px" }} className="fas fa-credit-card text-warning bg-dark p-3"></i>Buy Assets</a></button>
+                                                <button className="btn-special text-center withdraw"><a href="/buy" style={{ fontWeight: "600" }} className="text-white "><i style={{ borderBottomLeftRadius: "15px", borderTopRightRadius: "15px", marginLeft: "20px" }} className="fas fa-credit-card text-warning bg-dark p-3"></i>Buy Assets</a></button>
                                             </div>
                                         </div>
                                     </div>
@@ -181,6 +194,18 @@ const Dashboard = () => {
                                                 <button onClick={handleSend} className="send-button">
                                                     <i className="fas fa-paper-plane send-button-icon"></i>
                                                 </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="col-md-12 grid-margin mt-3">
+                                    <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
+                                        <div className="card-body card-gradient">
+                                            <h4 className="text-success p-0">Notification<i className="fas fa-message send-button-icon"></i></h4>
+                                            <div className="message-box">
+                                                <p>
+                                                {isNotification}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
