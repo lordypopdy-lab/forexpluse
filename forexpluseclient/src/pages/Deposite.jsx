@@ -22,11 +22,11 @@ const Deposite = () => {
                     <div className="main-panel m-0 w-100">
                         <div className="content-wrapper">
                             <div className="row">
-                                <div style={{ borderRadius: "0px" }} className="col-xl-6 p-2 col-sm-6">
+                                <div style={{ borderRadius: "0px" }} className="col-xl-4 p-2 col-sm-4">
                                     <button onClick={walletConnect} className='btn btn-secondary w-100'><i className="fas fa-wallet text-warning m-2"></i>Connect Wallet</button>
                                     <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
                                         <div className="card-body card-gradient">
-                                        <h5 onClick={() => handleCopy("3KZtDH2nFFZiqnM4SDtTGD6yRZndLZVk6A")}>3KZtDH2nFFZiqnM4SDtTGD6yR...<i style={{ cursor: "pointer" }} className="fas fa-copy text-warning m-1"></i></h5>
+                                        <h5 onClick={() => handleCopy("3F2AtgAAbn4TQoCJf9gXjr2MxtqgMXw3s3")}>3F2AtgAAbn4TQoCJf9gXjr2Mxtq..<i style={{ cursor: "pointer" }} className="fas fa-copy text-warning m-1"></i></h5>
                                             <h4 className="card-title">Deposit Using Bitcoin | USDT(TRC20)</h4>
                                             <p className="card-description">Bitcoin | USDT Deposit Method</p><hr />
                                             <form className="forms-sample">
@@ -35,10 +35,23 @@ const Deposite = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="col-xl-6 col-sm-6 grid-margin mt-5">
+                                <div style={{ borderRadius: "0px" }} className="col-xl-4 p-2 col-sm-4">
+                                    <button onClick={walletConnect} className='btn btn-secondary w-100'><i className="fas fa-wallet text-warning m-2"></i>Connect Wallet</button>
                                     <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
                                         <div className="card-body card-gradient">
-                                        <h5 onClick={() => handleCopy("TZ36f5xQrXtcVYsZcXUnMzogLoEekh4sJK")}>TZ36f5xQrXtcVYsZcXUnMzogL...<i style={{ cursor: "pointer" }} className="fas fa-copy text-warning m-1"></i></h5>
+                                        <h5 onClick={() => handleCopy("0xaf8daae1cc72a8f9db1d096dec83cfec593fae87")}>0xaf8daae1cc72a8f9db1d096d...<i style={{ cursor: "pointer" }} className="fas fa-copy text-warning m-1"></i></h5>
+                                            <h4 className="card-title">Deposit Using Ethereum | USDT(ERC20)</h4>
+                                            <p className="card-description">Ethereum | USDT Deposit Method</p><hr />
+                                            <form className="forms-sample">
+                                                <p className="card-description"><span className="text-warning">Please make sure you upload your payment proof for quick payment verification On confirmation,</span> <span className="text-primary">our system will automatically Fund your account and notify you via email address.</span></p>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="col-xl-4 col-sm-4 grid-margin mt-5">
+                                    <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
+                                        <div className="card-body card-gradient">
+                                        <h5 onClick={() => handleCopy("TGMSYN1kCo8egaaAtNugu3qrLXnCdjuetQ")}>TGMSYN1kCo8egaaAtNugu3qrLXnCd...<i style={{ cursor: "pointer" }} className="fas fa-copy text-warning m-1"></i></h5>
                                         <h4 className="card-title">Deposit Using USDT | USDT(TRC20)</h4>
                                         <p className="card-description">USD | USDT Deposit Method</p><hr />
                                             <p className="card-description">Request other available Deposit Method</p>

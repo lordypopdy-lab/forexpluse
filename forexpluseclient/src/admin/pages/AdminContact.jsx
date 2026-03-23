@@ -4,14 +4,14 @@ import toast from "react-hot-toast";
 import { useState, useEffect } from 'react';
 
 const AdminContact = () => {
-  const Admin = JSON.parse(localStorage.getItem("admin"));
+  const Admin = JSON.parse(localStorage.getItem("admin1"));
   const adminEmail = Admin.email;
   const email = localStorage.getItem("chatID");
 
   const [chat, setChat] = useState([]);
   const [isDelete, setIsDelete] = useState(false)
   const [checkDelete, setCheckDelete] = useState("");
-  const [message, setMessage] = useState({ value: "", from: "admin", email: email });
+  const [message, setMessage] = useState({ value: "", from: "admin1", email: email });
   useEffect(() => {
     const email = localStorage.getItem("chatID");
     const getChat = async () => {
@@ -88,7 +88,7 @@ const AdminContact = () => {
                         <div style={{ border: "none", borderRadius: "9px" }} className="card card-gradient">
                           <div className="card-body card-gradient">
                             <div className="form-group">
-                              {data.from === "admin" ? (
+                              {data.from === "admin1" ? (
                                 <p style={{textAlign: "right"}}>
                                   <div style={{ float: "right" }} className="card-title m-3 text-warning">
                                     you

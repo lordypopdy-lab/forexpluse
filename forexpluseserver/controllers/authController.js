@@ -1,50 +1,468 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const Admin = require("../models/adminModel");
-const bankModel = require("../models/bankModel");
+const OtpModel = require("../models/OtpModel");
 const chatModel = require("../models/chatModel");
+const bankModel = require("../models/bankModel");
 const cryptoModel = require("../models/cryptoModel");
 const adminMessage = require("../models/adminMessage");
+const userInfomation = require("../models/userInformation");
+
+const nodemailer = require("nodemailer");
+
+const dotenv = require("dotenv");
+dotenv.config();
+
+const { sendWithdrawalEmail } = require("../helpers/mailer");
+
+const accountUpgradeModel = require("../models/accountLevel");
 const { hashPassword, comparePassword } = require("../helpers/auth");
+
+const mongoose = require("mongoose");
+
+
+const { sendEmail } = require("../utils/emailService.js");
+
+const sendMail = async (req, res) => {
+  try {
+    const { email, message } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required!" });
+    }
+    if (!message) {
+      return res.status(400).json({ error: "Message is required!" });
+    }
+
+    const subject = "TrustWave Notification 🔔";
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject,
+      text: message,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`📧 Email sent to ${email}`);
+
+    return res.json({ success: "Email sent and record updated successfully!" });
+  } catch (error) {
+    console.error("❌ sendMail error:", error);
+    return res.status(500).json({ error: "Internal server error", details: error.message });
+  }
+};
+
+const DeclineKyc = async (req, res) => {
+  const { kycDecline } = req.body;
+
+  const kycDec = await OtpModel.updateOne(
+    { _id: kycDecline },
+    { $set: { kycStatus: "Declined" } },
+  );
+  if (kycDec) {
+    return res.json({
+      success: "Kyc Declined Successfully!",
+    });
+  }
+
+  return res.json({
+    error: "Error Declining Kyc",
+  });
+};
+
+const DeleteKyc = async (req, res) => {
+  const { kycAction } = req.body;
+  const deleteAction = await OtpModel.deleteOne({ _id: kycAction });
+
+  if (deleteAction) {
+    return res.json({
+      success: "Kyc Request deleted succesfully!",
+    });
+  }
+
+  return res.json({
+    error: "Error Deleting Kyc Request",
+  });
+};
+
+const ApproveKyc = async (req, res) => {
+  const { kycApprove } = req.body;
+
+  const kycDec = await OtpModel.updateOne(
+    { _id: kycApprove },
+    { $set: { kycStatus: "verified" } },
+  );
+  if (kycDec) {
+    return res.json({
+      success: "Kyc verified Successfully!",
+    });
+  }
+
+  return res.json({
+    error: "Error Approving Kyc",
+  });
+};
+
+const fetchAllKyc = async (req, res) => {
+  const kyc = await OtpModel.find({});
+  return res.json({
+    kyc: kyc,
+  });
+};
+
+const fetchKyc = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.json({
+      error: "Email Required!",
+    });
+  }
+
+  const ifVerifiedOtp = await OtpModel.findOne({ email: email });
+
+  if (ifVerifiedOtp && ifVerifiedOtp.kycStatus === "Verified") {
+    return res.json({
+      status: "Verified",
+    });
+  }
+
+  if (ifVerifiedOtp && ifVerifiedOtp.kycStatus === "Inreview") {
+    return res.json({
+      status: "Inreview",
+    });
+  }
+
+  return res.json({
+    status: "Unverified",
+  });
+};
+
+const fetchOTP = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.json({
+      error: "Email Required!",
+    });
+  }
+
+  const ifVerifiedOtp = await OtpModel.findOne({ email: email });
+
+  if (ifVerifiedOtp && ifVerifiedOtp.status === "Verified") {
+    return res.json({
+      status: "Verified",
+    });
+  }
+
+  return res.json({
+    status: "Unverified",
+  });
+};
+
+const verifyOtp = async (req, res) => {
+  const { otp } = req.body;
+
+  if (!otp) {
+    return res.json({
+      error: "Please Enter OTP Code before submiting!",
+    });
+  }
+
+  const ifCorrect = await OtpModel.findOne({ Otp: otp });
+  if (!ifCorrect) {
+    return res.json({
+      error: "Incorrect OTP, Please Re-Check Yout E-Mail for New OTP",
+    });
+  }
+
+  await OtpModel.updateOne({ Otp: otp }, { $set: { status: "Verified" } });
+  return res.status(200).json({
+    success: "Successfuly Verified OTP",
+  });
+};
+
+const getOTP = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.json({
+      error: "email is required to request for OTP",
+    });
+  }
+
+  // Generate OTP
+  const generateOTP = () => Math.floor(100000 + Math.random() * 900000);
+
+  const otp = generateOTP();
+
+  // Email Template
+  const emailHTML = `
+    <div>
+      <p>Hi <b>${email}</b>,</p>
+      <p>Your verification code is:</p>
+      <h2>${otp}</h2>
+      <p>This code will expire in 15 minutes.</p>
+      <p>If you didn’t request this, ignore the email.</p>
+      <br/>
+      <p>Thanks,</p>
+      <p><b>Your App Team</b></p>
+    </div>
+  `;
+
+  try {
+    // Send using Resend
+    const sent = await sendEmail(email, "Your OTP Code", emailHTML);
+
+    if (!sent) {
+      return res.status(500).json({ error: "Failed to send OTP" });
+    }
+
+    // Save or update OTP in DB
+    const ifExist = await OtpModel.findOne({ email });
+
+    if (ifExist) {
+      await OtpModel.updateOne({ email }, { $set: { Otp: otp } });
+
+      return res.json({
+        message: "OTP Sent Successfully!",
+        OTP: otp,
+      });
+    }
+
+    await OtpModel.create({ email, Otp: otp });
+
+    return res.json({
+      message: "OTP Sent Successfully!",
+      OTP: otp,
+    });
+  } catch (error) {
+    console.error("Error sending OTP:", error);
+    return res.status(500).json({ error: "Internal error" });
+  }
+};
+
+const citizenId = async (req, res) => {
+  const { email, imgSrc } = req.body;
+
+  const checkIF = await OtpModel.findOne({ email: email });
+
+  console.log(email)
+
+  if (checkIF) {
+    await OtpModel.updateOne(
+      { email: email },
+      { $set: { kycStatus: "Inreview", kycPic: imgSrc } },
+    );
+    const updateUserPic = await userInfomation.updateOne(
+      { email: email },
+      { $set: { IdProfile: imgSrc } },
+    );
+    const updateUser = await User.updateOne(
+      { email: email },
+      { $set: { citizenId: `${imgSrc}`, verification: `Inreview` } },
+    );
+    if (updateUser && updateUserPic) {
+      return res.json({
+        success: "Success",
+      });
+    }
+  } else {
+    await OtpModel.create({
+      email: email,
+      Otp: "",
+      status: "Unverified",
+      kycStatus: "Inreview",
+      kycPic: imgSrc,
+    });
+
+    const updateUserPic = await userInfomation.updateOne(
+      { email: email },
+      { $set: { IdProfile: imgSrc } },
+    );
+    const updateUser = await User.updateOne(
+      { email: email },
+      { $set: { citizenId: `${imgSrc}`, verification: `Inreview` } },
+    );
+    if (updateUser && updateUserPic) {
+      return res.json({
+        success: "Success",
+      });
+    }
+  }
+};
+
+const userInfo = async (req, res) => {
+  const { email, Id, Country } = req.body;
+  const check = await userInfomation.findOne({ email });
+  if (check) {
+    const update = await userInfomation.updateOne(
+      { email: email },
+      { $set: { email: `${email}`, Id: `${Id}`, Country: `${Country}` } },
+    );
+    if (update) {
+      return res.json({
+        message: "Updated",
+      });
+    }
+  }
+  const create = await userInfomation.create({
+    email,
+    Id,
+    Country,
+  });
+  if (create) {
+    return res.json({
+      message: "success",
+    });
+  }
+};
+
+
+const getUserVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const otpStatus = await OtpModel.findOne({ email });
+
+    if (!otpStatus) {
+      return res.json({
+        status: "failed",
+        message: "No record found",
+      });
+    }
+
+    return res.json({
+      status: "success",
+      data: otpStatus,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ status: "error", message: "Server error" });
+  }
+};
+
+ const deleteUser = async (req, res) => {
+  try {
+    const { userID } = req.body;
+
+    const deletedUser = await User.findByIdAndDelete(userID);
+
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, msg: "User not found" });
+    }
+
+    res.json({ success: true, msg: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete Error:", error);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+const getAccountLevel = async (req, res) => {
+      const {ID} = req.body;
+      const ifExist = await accountUpgradeModel.findOne({userID: ID});
+
+      if(ifExist){
+        return res.json({
+          Level: ifExist
+        })
+      }
+
+}
+
+const upgradeAccount = async (req, res) => {
+  try {
+    const { ID, ULevel } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(ID)) {
+      return res.json({ error: "Invalid user ID format" });
+    }
+
+    const checkUser = await User.findById(ID);
+    if (!checkUser) {
+      return res.status(404).json({ error: "User ID not found" });
+    }
+
+    const ifExist = await accountUpgradeModel.findOne({ userID: ID });
+
+    if (!ifExist) {
+
+      await accountUpgradeModel.create({
+        userID: ID,
+        accountLevel: ULevel,
+      });
+
+      return res.json({
+        success: `User ${ID} has been upgraded to ${ULevel}`,
+      });
+    }
+
+    if (ifExist.accountLevel === ULevel) {
+      return res.json({
+        error: `User account is already at ${ifExist.accountLevel}`,
+      });
+    }
+
+    await accountUpgradeModel.updateOne({ userID: ID }, { $set: { accountLevel: ULevel } });
+
+    return res.json({
+      success: `User ${ID} has been upgraded to ${ULevel}`,
+    });
+  } catch (error) {
+    console.error("Error upgrading account:", error);
+    return res.json({ error: "Internal server error" });
+  }
+};
+
 
 const getMessage = async (req, res) => {
   const { ID } = req.body;
-  
-  const getNoti = await adminMessage.findOne({userID: ID});
 
-  if(getNoti){
+  const getNoti = await adminMessage.findOne({ userID: ID });
+
+  if (getNoti) {
     return res.json(getNoti)
   }
 
-  return res.json({data: "No data"});
+  return res.json({ data: "No data" });
 }
 
 const getNotification = async (req, res) => {
-  const {ID} = req.body;
-  const getNoti = await adminMessage.findOne({userID: ID});
+  const { ID } = req.body;
+  const getNoti = await adminMessage.findOne({ userID: ID });
 
-  if(getNoti){
+  if (getNoti) {
     return res.json(getNoti)
   }
 
-  return res.json({data: "No data"});
+  return res.json({ data: "No data" });
 }
 
 const Delete = async (req, res) => {
   const { isDelete } = req.body;
 
-  const checkBank = await bankModel.findOne({_id: isDelete});
-  const checkCrypto = await cryptoModel.findOne({_id: isDelete});
+  const checkBank = await bankModel.findOne({ _id: isDelete });
+  const checkCrypto = await cryptoModel.findOne({ _id: isDelete });
 
-  if(checkBank){
-    await bankModel.deleteOne({_id: isDelete})
+  if (checkBank) {
+    await bankModel.deleteOne({ _id: isDelete })
     return res.json({
       success: "Transaction Deleted Successfully!"
     })
   }
 
-  if(checkCrypto){
-    await cryptoModel.deleteOne({_id: isDelete});
+  if (checkCrypto) {
+    await cryptoModel.deleteOne({ _id: isDelete });
     return res.json({
       success: "Transaction Deleted Successfully!"
     })
@@ -59,18 +477,18 @@ const Delete = async (req, res) => {
 const Approve = async (req, res) => {
   const { isApprove } = req.body;
 
-  const checkBank = await bankModel.findOne({_id: isApprove});
-  const checkCrypto = await cryptoModel.findOne({_id: isApprove});
+  const checkBank = await bankModel.findOne({ _id: isApprove });
+  const checkCrypto = await cryptoModel.findOne({ _id: isApprove });
 
-  if(checkBank){
-    await bankModel.updateOne({_id: isApprove}, {$set: {status: "Approved"}});
+  if (checkBank) {
+    await bankModel.updateOne({ _id: isApprove }, { $set: { status: "Approved" } });
     return res.json({
       success: "Transaction approved Successfully!"
     })
   }
 
-  if(checkCrypto){
-    await cryptoModel.updateOne({_id: isApprove}, {$set: {status: "Approved"}});
+  if (checkCrypto) {
+    await cryptoModel.updateOne({ _id: isApprove }, { $set: { status: "Approved" } });
     return res.json({
       success: "Transaction Approved Successfully!"
     })
@@ -85,18 +503,18 @@ const Approve = async (req, res) => {
 const Decline = async (req, res) => {
   const { isDecline } = req.body;
 
-  const checkBank = await bankModel.findOne({_id: isDecline});
-  const checkCrypto = await cryptoModel.findOne({_id: isDecline});
+  const checkBank = await bankModel.findOne({ _id: isDecline });
+  const checkCrypto = await cryptoModel.findOne({ _id: isDecline });
 
-  if(checkBank){
-    await bankModel.updateOne({_id: isDecline}, {$set: {status: "Declined"}});
+  if (checkBank) {
+    await bankModel.updateOne({ _id: isDecline }, { $set: { status: "Declined" } });
     return res.json({
       success: "Transaction Declined Successfully!"
     })
   }
 
-  if(checkCrypto){
-    await cryptoModel.updateOne({_id: isDecline}, {$set: {status: "Declined"}});
+  if (checkCrypto) {
+    await cryptoModel.updateOne({ _id: isDecline }, { $set: { status: "Declined" } });
     return res.json({
       success: "Transaction Declined Successfully!"
     })
@@ -130,7 +548,7 @@ const userNotification = async (req, res) => {
     })
   }
 
-   await adminMessage.create({
+  await adminMessage.create({
     userID: id,
     notification: value,
   })
@@ -163,7 +581,7 @@ const notificationAdder = async (req, res) => {
     })
   }
 
-   await adminMessage.create({
+  await adminMessage.create({
     userID: id,
     submitMessage: value,
   })
@@ -326,6 +744,7 @@ const withdrawCrypto = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { deposit: -value } });
+        sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -340,6 +759,7 @@ const withdrawCrypto = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { profit: -value } });
+        sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -354,6 +774,7 @@ const withdrawCrypto = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { bonuse: -value } });
+        sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -431,6 +852,7 @@ const withdrawBank = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { deposit: -value } });
+    sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -447,9 +869,11 @@ const withdrawBank = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { profit: -value } });
+sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
+
   }
 
   if (findUser.bonuse >= value) {
@@ -463,6 +887,7 @@ const withdrawBank = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { bonuse: -value } });
+    sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -725,19 +1150,33 @@ module.exports = {
   test,
   Delete,
   Approve,
+  getOTP,
   getUser,
+  sendMail,
   Decline,
+  verifyOtp,
+  fetchOTP,
+  DeleteKyc,
+  DeclineKyc,
+  ApproveKyc,
+  fetchAllKyc,
+  fetchKyc,
   getUsers,
   chatSend,
+  userInfo,
   deleteChat,
   loginUser,
+  citizenId,
   getMessage,
+  deleteUser,
   createUser,
   loginAdmin,
   addBalance,
   getAdminChat,
   withdrawBank,
   AdminGetBankR,
+  upgradeAccount,
+  getAccountLevel,
   getNotification,
   AdminGetCrypto,
   withdrawCrypto,
@@ -745,4 +1184,5 @@ module.exports = {
   getCryptoRecords,
   userNotification,
   notificationAdder,
+  getUserVerification,
 };
