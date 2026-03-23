@@ -34,7 +34,7 @@ const sendMail = async (req, res) => {
       return res.status(400).json({ error: "Message is required!" });
     }
 
-    const subject = "TrustWave Notification 🔔";
+    const subject = "ForexPluse Notification 🔔";
 
     const transporter = nodemailer.createTransport({
       service: "gmail",

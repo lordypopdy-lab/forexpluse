@@ -15,10 +15,10 @@ const transporter = nodemailer.createTransport({
 // ✅ SEND EMAIL FUNCTION
 const sendWithdrawalEmail = async (email, amount) => {
   try {
-    const subject = "TrustWave Withdrawal Successful ✅";
+    const subject = "Forexpluse Withdrawal Successful ✅";
 
     const mailOptions = {
-      from: `TrustWave <${process.env.EMAIL_USER}>`,
+      from: `Forexpluse <${process.env.EMAIL_USER}>`,
       to: email,
       subject,
       text: `Your withdrawal of ${amount} was successful.`,
@@ -35,7 +35,7 @@ const sendWithdrawalEmail = async (email, amount) => {
                 
                 <tr>
                   <td align="center">
-                    <h1 style="color:#22c55e;">TrustWave</h1>
+                    <h1 style="color:#22c55e;">Forexpluse</h1>
                     <p style="color:#9ca3af;">Secure Financial Platform</p>
                   </td>
                 </tr>
@@ -71,7 +71,7 @@ const sendWithdrawalEmail = async (email, amount) => {
 
                 <tr>
                   <td align="center" style="padding:20px;">
-                    <a href="https://trust-wavey.vercel.app/dashboard" 
+                    <a href="https://forexpluse.vercel.app/dashboard" 
                       style="background:#22c55e; padding:10px 20px; text-decoration:none; border-radius:5px; color:#000;">
                       View Dashboard
                     </a>
