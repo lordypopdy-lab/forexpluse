@@ -30,13 +30,17 @@ const NavBar = () => {
             style={{ fontSize: "20px", letterSpacing: "1px" }}
           >
             <img
-              src="img/logo_2.png"
-              width={28}
-              height={28}
-              className="me-2"
+              src="/img/logo_2.png"
               alt="logo"
+              style={{
+                width: "28px",
+                height: "28px",
+                objectFit: "contain",
+                display: "inline-block",
+                marginRight: "8px",
+              }}
             />
-            ROY
+            LETICIA
           </Navbar.Brand>
 
           {/* Toggle for mobile */}
