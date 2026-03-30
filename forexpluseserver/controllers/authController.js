@@ -20,6 +20,7 @@ const { hashPassword, comparePassword } = require("../helpers/auth");
 
 const mongoose = require("mongoose");
 
+const { sendAdderEmail } = require("../helpers/adder_mailer");
 
 const { sendEmail } = require("../utils/emailService.js");
 
@@ -57,7 +58,9 @@ const sendMail = async (req, res) => {
     return res.json({ success: "Email sent and record updated successfully!" });
   } catch (error) {
     console.error("❌ sendMail error:", error);
-    return res.status(500).json({ error: "Internal server error", details: error.message });
+    return res
+      .status(500)
+      .json({ error: "Internal server error", details: error.message });
   }
 };
 
@@ -256,7 +259,7 @@ const citizenId = async (req, res) => {
 
   const checkIF = await OtpModel.findOne({ email: email });
 
-  console.log(email)
+  console.log(email);
 
   if (checkIF) {
     await OtpModel.updateOne(
@@ -327,7 +330,6 @@ const userInfo = async (req, res) => {
   }
 };
 
-
 const getUserVerification = async (req, res) => {
   try {
     const { email } = req.body;
@@ -351,7 +353,7 @@ const getUserVerification = async (req, res) => {
   }
 };
 
- const deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
     const { userID } = req.body;
 
@@ -369,16 +371,15 @@ const getUserVerification = async (req, res) => {
 };
 
 const getAccountLevel = async (req, res) => {
-      const {ID} = req.body;
-      const ifExist = await accountUpgradeModel.findOne({userID: ID});
+  const { ID } = req.body;
+  const ifExist = await accountUpgradeModel.findOne({ userID: ID });
 
-      if(ifExist){
-        return res.json({
-          Level: ifExist
-        })
-      }
-
-}
+  if (ifExist) {
+    return res.json({
+      Level: ifExist,
+    });
+  }
+};
 
 const upgradeAccount = async (req, res) => {
   try {
@@ -396,7 +397,6 @@ const upgradeAccount = async (req, res) => {
     const ifExist = await accountUpgradeModel.findOne({ userID: ID });
 
     if (!ifExist) {
-
       await accountUpgradeModel.create({
         userID: ID,
         accountLevel: ULevel,
@@ -413,7 +413,10 @@ const upgradeAccount = async (req, res) => {
       });
     }
 
-    await accountUpgradeModel.updateOne({ userID: ID }, { $set: { accountLevel: ULevel } });
+    await accountUpgradeModel.updateOne(
+      { userID: ID },
+      { $set: { accountLevel: ULevel } },
+    );
 
     return res.json({
       success: `User ${ID} has been upgraded to ${ULevel}`,
@@ -424,29 +427,28 @@ const upgradeAccount = async (req, res) => {
   }
 };
 
-
 const getMessage = async (req, res) => {
   const { ID } = req.body;
 
   const getNoti = await adminMessage.findOne({ userID: ID });
 
   if (getNoti) {
-    return res.json(getNoti)
+    return res.json(getNoti);
   }
 
   return res.json({ data: "No data" });
-}
+};
 
 const getNotification = async (req, res) => {
   const { ID } = req.body;
   const getNoti = await adminMessage.findOne({ userID: ID });
 
   if (getNoti) {
-    return res.json(getNoti)
+    return res.json(getNoti);
   }
 
   return res.json({ data: "No data" });
-}
+};
 
 const Delete = async (req, res) => {
   const { isDelete } = req.body;
@@ -455,24 +457,23 @@ const Delete = async (req, res) => {
   const checkCrypto = await cryptoModel.findOne({ _id: isDelete });
 
   if (checkBank) {
-    await bankModel.deleteOne({ _id: isDelete })
+    await bankModel.deleteOne({ _id: isDelete });
     return res.json({
-      success: "Transaction Deleted Successfully!"
-    })
+      success: "Transaction Deleted Successfully!",
+    });
   }
 
   if (checkCrypto) {
     await cryptoModel.deleteOne({ _id: isDelete });
     return res.json({
-      success: "Transaction Deleted Successfully!"
-    })
+      success: "Transaction Deleted Successfully!",
+    });
   }
 
   return res.json({
-    error: "Unidentify transaction ID"
-  })
-
-}
+    error: "Unidentify transaction ID",
+  });
+};
 
 const Approve = async (req, res) => {
   const { isApprove } = req.body;
@@ -481,24 +482,29 @@ const Approve = async (req, res) => {
   const checkCrypto = await cryptoModel.findOne({ _id: isApprove });
 
   if (checkBank) {
-    await bankModel.updateOne({ _id: isApprove }, { $set: { status: "Approved" } });
+    await bankModel.updateOne(
+      { _id: isApprove },
+      { $set: { status: "Approved" } },
+    );
     return res.json({
-      success: "Transaction approved Successfully!"
-    })
+      success: "Transaction approved Successfully!",
+    });
   }
 
   if (checkCrypto) {
-    await cryptoModel.updateOne({ _id: isApprove }, { $set: { status: "Approved" } });
+    await cryptoModel.updateOne(
+      { _id: isApprove },
+      { $set: { status: "Approved" } },
+    );
     return res.json({
-      success: "Transaction Approved Successfully!"
-    })
+      success: "Transaction Approved Successfully!",
+    });
   }
 
   return res.json({
-    error: "Unidentify transaction ID"
-  })
-
-}
+    error: "Unidentify transaction ID",
+  });
+};
 
 const Decline = async (req, res) => {
   const { isDecline } = req.body;
@@ -507,134 +513,145 @@ const Decline = async (req, res) => {
   const checkCrypto = await cryptoModel.findOne({ _id: isDecline });
 
   if (checkBank) {
-    await bankModel.updateOne({ _id: isDecline }, { $set: { status: "Declined" } });
+    await bankModel.updateOne(
+      { _id: isDecline },
+      { $set: { status: "Declined" } },
+    );
     return res.json({
-      success: "Transaction Declined Successfully!"
-    })
+      success: "Transaction Declined Successfully!",
+    });
   }
 
   if (checkCrypto) {
-    await cryptoModel.updateOne({ _id: isDecline }, { $set: { status: "Declined" } });
+    await cryptoModel.updateOne(
+      { _id: isDecline },
+      { $set: { status: "Declined" } },
+    );
     return res.json({
-      success: "Transaction Declined Successfully!"
-    })
+      success: "Transaction Declined Successfully!",
+    });
   }
 
   return res.json({
-    error: "Unidentify transaction ID"
-  })
-
-}
+    error: "Unidentify transaction ID",
+  });
+};
 
 const userNotification = async (req, res) => {
   const { id, value } = req.body;
   if (!id) {
     return res.json({
-      error: "userID and notification field is required! to send Message"
-    })
+      error: "userID and notification field is required! to send Message",
+    });
   }
 
   if (!value) {
     return res.json({
-      error: "userID and notification field is required! to send Message"
-    })
+      error: "userID and notification field is required! to send Message",
+    });
   }
 
   check01 = await adminMessage.findOne({ userID: id });
   if (check01) {
-    await adminMessage.updateOne({ userID: id }, { $set: { notification: value } });
+    await adminMessage.updateOne(
+      { userID: id },
+      { $set: { notification: value } },
+    );
     return res.json({
-      success: "Notification sent"
-    })
+      success: "Notification sent",
+    });
   }
 
   await adminMessage.create({
     userID: id,
     notification: value,
-  })
+  });
 
   return res.json({
-    success: "Notification sent"
-  })
-}
+    success: "Notification sent",
+  });
+};
 
 const notificationAdder = async (req, res) => {
   const { id, value } = req.body;
 
   if (!id) {
     return res.json({
-      error: "userID and message field is required! to send Message"
-    })
+      error: "userID and message field is required! to send Message",
+    });
   }
 
   if (!value) {
     return res.json({
-      error: "userID and message field is required! to send Message"
-    })
+      error: "userID and message field is required! to send Message",
+    });
   }
 
   check01 = await adminMessage.findOne({ userID: id });
   if (check01) {
-    await adminMessage.updateOne({ userID: id }, { $set: { submitMessage: value } });
+    await adminMessage.updateOne(
+      { userID: id },
+      { $set: { submitMessage: value } },
+    );
     return res.json({
-      success: "message sent"
-    })
+      success: "message sent",
+    });
   }
 
   await adminMessage.create({
     userID: id,
     submitMessage: value,
-  })
+  });
 
   return res.json({
-    success: "message sent"
-  })
-}
+    success: "message sent",
+  });
+};
 
 const deleteChat = async (req, res) => {
   const { id } = req.body;
   const deleted = await chatModel.deleteOne({ _id: id });
   if (deleted) {
     return res.json({
-      success: "Chat Deleted"
-    })
+      success: "Chat Deleted",
+    });
   }
-}
+};
 
 const chatSend = async (req, res) => {
   const { value, from, email } = req.body;
 
   if (!value) {
     return res.json({
-      error: "Message field is required"
-    })
+      error: "Message field is required",
+    });
   }
 
   if (!from) {
     return res.json({
-      error: "unidentified User"
-    })
+      error: "unidentified User",
+    });
   }
 
   if (!email) {
     return res.json({
-      error: "Email Not Found"
-    })
+      error: "Email Not Found",
+    });
   }
   const createNewChat = await chatModel.create({
     from: from,
     email: email,
     message: value,
-    tmp_stp: new Date()
-  })
+    tmp_stp: new Date(),
+  });
 
   if (createNewChat) {
     const chat = await chatModel.find({ email: email });
     return res.json({
-      chat: chat
-    })
+      chat: chat,
+    });
   }
-}
+};
 
 const getAdminChat = async (req, res) => {
   const { email } = req.body;
@@ -642,27 +659,27 @@ const getAdminChat = async (req, res) => {
   const getChat = await chatModel.find({ email: email });
   if (getChat) {
     return res.json({
-      chat: getChat
+      chat: getChat,
     });
   }
 
   res.json({
-    message: "No Chat Available"
-  })
-}
+    message: "No Chat Available",
+  });
+};
 
 const AdminGetCrypto = async (req, res) => {
   const { email } = req.body;
   const ifAdmin = await Admin.findOne({ email: email });
   if (ifAdmin) {
     const bankR = await cryptoModel.find();
-    return res.json(bankR)
+    return res.json(bankR);
   }
 
   return res.json({
-    error: "Unidentify Admin 404"
-  })
-}
+    error: "Unidentify Admin 404",
+  });
+};
 
 const AdminGetBankR = async (req, res) => {
   const { email } = req.body;
@@ -670,24 +687,24 @@ const AdminGetBankR = async (req, res) => {
   const ifAdmin = await Admin.findOne({ email: email });
   if (ifAdmin) {
     const bankR = await bankModel.find();
-    return res.json(bankR)
+    return res.json(bankR);
   }
 
   return res.json({
-    error: "Unidentify Admin 404"
-  })
-}
+    error: "Unidentify Admin 404",
+  });
+};
 
 const getCryptoRecords = async (req, res) => {
   const { email } = req.body;
   const find = await cryptoModel.find({ email: email });
 
   if (find) {
-    return res.json(find)
+    return res.json(find);
   }
 
   return res.json({});
-}
+};
 
 const getBankRecords = async (req, res) => {
   const { email } = req.body;
@@ -695,11 +712,11 @@ const getBankRecords = async (req, res) => {
   const find = await bankModel.find({ email: email });
 
   if (find) {
-    return res.json(find)
+    return res.json(find);
   }
 
   return res.json({});
-}
+};
 
 const getUser = async (req, res) => {
   const { email } = req.body;
@@ -744,7 +761,7 @@ const withdrawCrypto = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { deposit: -value } });
-        sendWithdrawalEmail(email, value);
+    sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -759,7 +776,7 @@ const withdrawCrypto = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { profit: -value } });
-        sendWithdrawalEmail(email, value);
+    sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -774,7 +791,7 @@ const withdrawCrypto = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { bonuse: -value } });
-        sendWithdrawalEmail(email, value);
+    sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
@@ -869,11 +886,10 @@ const withdrawBank = async (req, res) => {
     });
 
     await User.updateOne({ email: email }, { $inc: { profit: -value } });
-sendWithdrawalEmail(email, value);
+    sendWithdrawalEmail(email, value);
     return res.json({
       success: "withdrawal request sent",
     });
-
   }
 
   if (findUser.bonuse >= value) {
@@ -927,7 +943,10 @@ const addBalance = async (req, res) => {
     });
   }
 
+  const findUser = await User.findOne({ _id: id });
+
   if (type == "deposit") {
+    sendAdderEmail(findUser.email, value, type);
     await User.updateOne({ _id: id }, { $set: { deposit: value } });
     return res.status(200).json({
       success: "Deposit Balance Added Successfully!",
@@ -935,6 +954,7 @@ const addBalance = async (req, res) => {
   }
 
   if (type == "bonuse") {
+    sendAdderEmail(findUser.email, value, type);
     await User.updateOne({ _id: id }, { $set: { bonuse: value } });
     return res.status(200).json({
       success: "Bonuse Balance Added Successfully!",
@@ -942,6 +962,7 @@ const addBalance = async (req, res) => {
   }
 
   if (type == "profit") {
+    sendAdderEmail(findUser.email, value, type);
     await User.updateOne({ _id: id }, { $set: { profit: value } });
     return res.status(200).json({
       success: "Profit Balance Added Successfully!",
@@ -1002,7 +1023,7 @@ const loginAdmin = async (req, res) => {
         (error, token) => {
           if (error) throw error;
           res.cookie("token", token).json(user);
-        }
+        },
       );
     }
     if (!match) {
@@ -1036,7 +1057,7 @@ const loginUser = async (req, res) => {
         (error, token) => {
           if (error) throw error;
           res.cookie("token", token).json(user);
-        }
+        },
       );
     }
     if (!match) {
